@@ -8,16 +8,17 @@ if __name__ == "__main__":
     print("--------------------")
 
     # Create a solver instance
-    solver = GameSolver(headless=True)
+    solver = GameSolver(headless=False)
 
     try:
         # Solve all games
         print("Solving all LinkedIn games...")
-        results = solver.solve_all_games()
+        results = solver.solve_mini_sudoku()
 
         print("\nResults:")
-        for game, solution in results.items():
-            print(f"{game}: {solution}")
+        print (results)
+        # for game, solution in results.items():
+        #     print(f"{game}: {solution}")
 
     except Exception as e:
         print(f"Error: {str(e)}")

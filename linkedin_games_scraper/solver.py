@@ -54,7 +54,14 @@ class GameSolver:
     def __init__(self, headless=True, results_dir=None):
         """Initialise the GameSolver."""
         # Configure Selenium-wire to capture all requests
-        self.seleniumwire_options = {"disable_encoding": True, "verify_ssl": False}
+        self.seleniumwire_options = {
+            "disable_encoding": True, 
+            "verify_ssl": False,
+            "proxy": {
+                "http": "http://squid1.localdom.net:3128",
+                "https": "http://squid1.localdom.net:3128"
+            },
+        }
 
         chrome_options = Options()
         if headless:
@@ -74,6 +81,27 @@ class GameSolver:
         # Create results directory if it doesn't exist
         self.results_dir = results_dir or "results"
         os.makedirs(self.results_dir, exist_ok=True)
+        
+    def login(self, email, password):
+        """Login to LinkedIn."""
+        logger.info("Logging in to LinkedIn...")
+        self.driver.get("https://www.linkedin.com/checkpoint/lg/sign-in-another-account")
+
+        # wait for email input to be present
+        email_input = self.wait.until(expected_conditions.presence_of_element_located((By.ID, "username")))
+        email_input.send_keys(email)
+        
+        password_input = self.driver.find_element(By.ID, "password")
+        password_input.send_keys(password)
+        
+        sign_in_button = self.driver.find_element(By.XPATH, "//button[@type='submit']")
+        sign_in_button.click()
+        
+        # Wait for login to complete
+        self.wait.until(expected_conditions.url_contains("linkedin.com/feed"))
+        # Then wait a bit more to ensure all requests are captured
+        time.sleep(5)
+        logger.info("Logged in to LinkedIn successfully.")
 
     def _find_game_response(self, game_type_id):
         """Find game response in requests."""
@@ -272,19 +300,8 @@ class GameSolver:
             logger.error("No Mini Sudoku data found")
         return None
 
-    def _start_game(self, game_url, navigation_timeout=30):
-        """Start a game and find its solution."""
-        # Clear existing requests
-        del self.driver.requests
-
-        # Navigate to game
-        logger.info(f"Navigating to game URL: {game_url}")
-        self.driver.get(game_url)
-
-        # Wait for the page to load completely with a timeout
+    def wait_for_page_load(self, timeout=30):
         start_time = time.time()
-        timeout = navigation_timeout
-
         while time.time() - start_time < timeout:
             try:
                 WebDriverWait(self.driver, 5).until(lambda d: d.execute_script("return document.readyState") == "complete")
@@ -298,6 +315,59 @@ class GameSolver:
                     logger.info(f"Waiting for page load... ({str(e)})")
                 time.sleep(1)
                 continue
+            
+    def get_leaderboard(self, game_url, timeout_seconds=30):
+        """Get the leaderboard for a game."""
+        # Clear existing requests
+        del self.driver.requests
+
+        # Navigate to game
+        logger.info(f"Navigating to game URL: {game_url}")
+        self.driver.get(game_url)
+        
+        # Wait for the page to load completely with a timeout
+        self.wait_for_page_load(timeout=timeout_seconds)
+        
+        # Find "See results" button and click it
+        try:
+            logger.info("Looking for 'See results' button")
+            results_button = WebDriverWait(self.driver, 10).until(
+                expected_conditions.element_to_be_clickable((By.XPATH, "//*[@class='games-share-footer']/button"))
+            )
+            logger.info("Found 'See results' button, clicking")
+            results_button.click()
+            logger.info("Successfully clicked 'See results' button")
+        except Exception as e:
+            logger.error(f"Failed to click 'See results' button: {str(e)}")
+            return None
+        
+        # Find the "See full leaderboard" link and click it
+        try:
+            logger.info("Looking for 'See full leaderboard' link")
+            full_leaderboard_link = WebDriverWait(self.driver, 10).until(
+                expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@aria-label,'See full leaderboard')]"))
+            )
+            logger.info("Found 'See full leaderboard' link, clicking")
+            full_leaderboard_link.click()
+            logger.info("Successfully clicked 'See full leaderboard' link")
+        except Exception as e:
+            logger.error(f"Failed to click 'See full leaderboard' link: {str(e)}")
+            return None
+        
+
+        return leaderboard
+       
+    def _start_game(self, game_url, navigation_timeout=30):
+        """Start a game and find its solution."""
+        # Clear existing requests
+        del self.driver.requests
+
+        # Navigate to game
+        logger.info(f"Navigating to game URL: {game_url}")
+        self.driver.get(game_url)
+
+        # Wait for the page to load completely with a timeout
+        self.wait_for_page_load(timeout=navigation_timeout)
 
         # Wait for and switch to the iframe
         try:
@@ -508,11 +578,11 @@ class GameSolver:
 # Main function
 def main():
     """Run the LinkedIn Games Solver."""
-    solver = GameSolver(headless=True)
+    solver = GameSolver(headless=False)
 
     try:
         # Solve all games
-        solver.solve_all_games()
+        solver.solve_zip()
     finally:
         solver.cleanup()
 
