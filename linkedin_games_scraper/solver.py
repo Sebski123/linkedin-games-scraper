@@ -6,11 +6,12 @@ import os
 import time
 from datetime import datetime
 
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from seleniumwire import webdriver
+from selenium.common.exceptions import NoSuchElementException
 
 # Set up logging
 # First, disable all loggers
@@ -57,23 +58,24 @@ class GameSolver:
         self.seleniumwire_options = {
             "disable_encoding": True, 
             "verify_ssl": False,
-            "proxy": {
-                "http": "http://squid1.localdom.net:3128",
-                "https": "http://squid1.localdom.net:3128"
-            },
+            # "proxy": {
+            #     "http": "http://squid1.localdom.net:3128",
+            #     "https": "http://squid1.localdom.net:3128"
+            # },
         }
 
-        chrome_options = Options()
+        firefox_options = Options()
         if headless:
-            chrome_options.add_argument("--headless")
-
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument(f"--user-data-dir=/tmp/chrome-data-{time.time()}")
+            firefox_options.add_argument("--headless")
+            
+        firefox_options.add_argument("--disable-content-sandbox")
+        
+        firefox_options.add_argument("-profile")
+        firefox_options.add_argument("C:/Users/sem/AppData/Roaming/Mozilla/Firefox/Profiles/1k1o0g08.default-release-1/")        
 
         # Initialise the driver
-        self.driver = webdriver.Chrome(seleniumwire_options=self.seleniumwire_options, options=chrome_options)
-        self.wait = WebDriverWait(self.driver, 10)
+        self.driver = webdriver.Firefox(seleniumwire_options=self.seleniumwire_options, options=firefox_options)
+        self.wait = WebDriverWait(self.driver, 30)
 
         # Initialise results dictionary
         self.results = {"data": {}}
@@ -85,7 +87,8 @@ class GameSolver:
     def login(self, email, password):
         """Login to LinkedIn."""
         logger.info("Logging in to LinkedIn...")
-        self.driver.get("https://www.linkedin.com/checkpoint/lg/sign-in-another-account")
+        self.driver.get("https://www.linkedin.com")
+        # self.driver.get("https://www.linkedin.com/checkpoint/lg/sign-in-another-account")
 
         # wait for email input to be present
         email_input = self.wait.until(expected_conditions.presence_of_element_located((By.ID, "username")))
@@ -102,6 +105,16 @@ class GameSolver:
         # Then wait a bit more to ensure all requests are captured
         time.sleep(5)
         logger.info("Logged in to LinkedIn successfully.")
+
+    def extract_csrf_token(self):
+        """Extract CSRF token from cookies."""
+        for cookie in self.driver.get_cookies():
+            if cookie['name'] == 'JSESSIONID':
+                csrf_token = cookie['value'].strip('"')
+                logger.info(f"Extracted CSRF token: {csrf_token}")
+                return csrf_token
+        logger.warning("CSRF token not found in cookies.")
+        return None
 
     def _find_game_response(self, game_type_id):
         """Find game response in requests."""
@@ -315,7 +328,38 @@ class GameSolver:
                     logger.info(f"Waiting for page load... ({str(e)})")
                 time.sleep(1)
                 continue
-            
+     
+     
+    GAME_IDS = {
+        "pinpoint":     "1%2C624",
+        "crossclimb":   "2%2C624",
+        "zip":          "6%2C303",
+        "queens":       "5%2C464",
+        "tango":        "3%2C624",
+        "mini_sudoku":  "7%2C156",
+    }       
+    def get_leaderboard_via_fetch(self, game, csrf_token):
+        """Get the leaderboard for a game using fetch API."""
+        # Clear existing requests
+        del self.driver.requests
+        
+        url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0%2C"
+        url_end = "%29,start:0,count:15)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
+        # Use fetch API to get leaderboard data directly
+        try:
+            logger.info("Fetching leaderboard data via fetch API")
+            fetch_script = f"""
+            fetch('{url_start}{self.GAME_IDS[game]}{url_end}', {{
+                headers: {{"csrf-token": "{csrf_token}"}},
+            }});
+            """
+            self.driver.execute_script(fetch_script)
+            time.sleep(3)  # Wait for the request to complete
+            logger.info("Successfully fetched leaderboard data")
+        except Exception as e:
+            logger.error(f"Failed to fetch leaderboard data: {str(e)}")
+            return None
+    
     def get_leaderboard(self, game_url, timeout_seconds=30):
         """Get the leaderboard for a game."""
         # Clear existing requests
@@ -336,26 +380,72 @@ class GameSolver:
             )
             logger.info("Found 'See results' button, clicking")
             results_button.click()
-            logger.info("Successfully clicked 'See results' button")
-        except Exception as e:
-            logger.error(f"Failed to click 'See results' button: {str(e)}")
-            return None
+            logger.info("Successfully clicked 'See results' button")           
+        except Exception:
+            try:
+                logger.info("Trying second method to find 'See results' button")
+                see_more_button = WebDriverWait(self.driver, 5).until(
+                    expected_conditions.element_to_be_clickable((By.XPATH, "//span[span[contains(text(),'See results')]]"))
+                )
+                logger.info("Found 'See results' button, clicking")
+                see_more_button.click()
+                logger.info("Successfully clicked 'See results' button")
+            except Exception as e2:
+                logger.error(f"Failed to click 'See results' button: {str(e2)}")
+                return None
         
-        # Find the "See full leaderboard" link and click it
+        # Navigate to leaderboard tab
+        self.driver.get(f"{game_url}/results/leaderboard/connections/")
+        self.wait_for_page_load(timeout=timeout_seconds)
+        
+        # Check if "See more" button exists and click it if so
         try:
-            logger.info("Looking for 'See full leaderboard' link")
-            full_leaderboard_link = WebDriverWait(self.driver, 10).until(
-                expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@aria-label,'See full leaderboard')]"))
+            logger.info("Looking for 'See more' button")
+            see_more_button = WebDriverWait(self.driver, 10).until(
+                expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@aria-label,'See more')]"))
             )
-            logger.info("Found 'See full leaderboard' link, clicking")
-            full_leaderboard_link.click()
-            logger.info("Successfully clicked 'See full leaderboard' link")
+            logger.info("Found 'See more' button, clicking")
+            see_more_button.click()
+            logger.info("Successfully clicked 'See more' button")
         except Exception as e:
-            logger.error(f"Failed to click 'See full leaderboard' link: {str(e)}")
-            return None
+            
+            logger.info(f"No 'See more' button found or failed to click: {str(e)}") 
+            
+        # Wait for leaderboard data to load
+        logger.info("Waiting briefly for leaderboard network requests to populate...")
+        time.sleep(5)
         
+        
+    def find_leaderboard_data(self):
+        """Find leaderboard data in requests."""
+        leaderboard_data = {}
+        filtered_requests = [request for request in self.driver.requests if ("voyager/api/graphql" in request.url and "voyagerIdentityDashGameConnectionsEntities" in request.url and ("c37afe5a2cada33789b5a636e62147ae" in request.url or "370a22a07dce5feba0a603ed03e4c908" in request.url))]
+        for request in filtered_requests:
+            if not request.response:
+                continue
 
-        return leaderboard
+            try:
+                body = request.response.body.decode("utf-8")
+                data = json.loads(body)
+                entries_temp = data.get("data", {})
+                if "identityDashGameConnectionsEntitiesByOptedInToLeaderboardAndPlayed" in entries_temp:
+                    entries = entries_temp.get("identityDashGameConnectionsEntitiesByOptedInToLeaderboardAndPlayed", {}).get("elements", [])
+                else:
+                    entries = entries_temp.get("identityDashGameConnectionsEntitiesByLeaderboardSnapshotV2", {}).get("elements", [])
+                logger.info(f"Found {len(entries)} leaderboard entries in response")
+                
+                for entry in entries:
+                    player_name = entry.get("playerDetails").get("player").get("profile").get("firstName") 
+                    player_score = {
+                        "time": entry.get("gameScore").get("timeElapsed"),
+                        "guessCount": entry.get("gameScore").get("totalGuessCount"),
+                        "flawless": entry.get("isFlawless"),
+                    }
+                    leaderboard_data[player_name] = player_score
+                logger.info(f"Extracted {len(leaderboard_data)} leaderboard entries")
+            except Exception as e:
+                logger.error(f"Error parsing leaderboard response: {str(e)}")
+        return leaderboard_data
        
     def _start_game(self, game_url, navigation_timeout=30):
         """Start a game and find its solution."""
@@ -578,11 +668,29 @@ class GameSolver:
 # Main function
 def main():
     """Run the LinkedIn Games Solver."""
-    solver = GameSolver(headless=False)
+    solver = GameSolver(headless=True)
 
     try:
         # Solve all games
-        solver.solve_zip()
+        solver.driver.get("https://www.linkedin.com/")
+        solver.wait_for_page_load(timeout=30)
+        csrf_token = solver.extract_csrf_token()
+        
+        # solver.get_leaderboard(solver.GAME_URLS["zip"], timeout_seconds=30)
+        # solver.get_leaderboard(solver.GAME_URLS["tango"], timeout_seconds=30)
+
+        leaderboard = {}
+        
+        for game_name, game_url in GameSolver.GAME_URLS.items():
+            logger.info(f"Getting leaderboard for {game_name}...")
+            solver.get_leaderboard_via_fetch(game_name, csrf_token)
+            leaderboard_local = solver.find_leaderboard_data()
+            leaderboard[game_name] = leaderboard_local
+            print(f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
+            
+        print("\nLeaderboard Results:")
+        print(leaderboard)
+        solver.results = leaderboard
     finally:
         solver.cleanup()
 
