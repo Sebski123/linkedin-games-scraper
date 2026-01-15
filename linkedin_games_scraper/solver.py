@@ -87,8 +87,7 @@ class GameSolver:
     def login(self, email, password):
         """Login to LinkedIn."""
         logger.info("Logging in to LinkedIn...")
-        self.driver.get("https://www.linkedin.com")
-        # self.driver.get("https://www.linkedin.com/checkpoint/lg/sign-in-another-account")
+        self.driver.get("https://www.linkedin.com/checkpoint/lg/sign-in-another-account")
 
         # wait for email input to be present
         email_input = self.wait.until(expected_conditions.presence_of_element_located((By.ID, "username")))
@@ -330,14 +329,24 @@ class GameSolver:
                 continue
      
      
+    GAME_START_DATES = {
+        "pinpoint":     "2024-04-30",
+        "crossclimb":   "2024-04-30",
+        "zip":          "2025-03-17",
+        "tango":        "2024-10-07",
+        "queens":       "2024-04-30",
+        "mini_sudoku":  "2025-08-11",
+    }
+    
     GAME_IDS = {
-        "pinpoint":     "1%2C624",
-        "crossclimb":   "2%2C624",
-        "zip":          "6%2C303",
-        "queens":       "5%2C464",
-        "tango":        "3%2C624",
-        "mini_sudoku":  "7%2C156",
-    }       
+        "pinpoint":     "1",
+        "crossclimb":   "2",
+        "zip":          "6",
+        "tango":        "5",
+        "queens":       "3",
+        "mini_sudoku":  "7",
+    }
+          
     def get_leaderboard_via_fetch(self, game, csrf_token):
         """Get the leaderboard for a game using fetch API."""
         # Clear existing requests
@@ -345,16 +354,27 @@ class GameSolver:
         
         url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0%2C"
         url_end = "%29,start:0,count:15)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
+        
+        # Calculated days since game start
+        start_date_str = self.GAME_START_DATES.get(game)
+        if not start_date_str:
+            logger.error(f"Start date not found for game: {game}")
+            return None
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        days_since_start = (datetime.now() - start_date).days
+        
         # Use fetch API to get leaderboard data directly
         try:
             logger.info("Fetching leaderboard data via fetch API")
             fetch_script = f"""
-            fetch('{url_start}{self.GAME_IDS[game]}{url_end}', {{
+            fetch('{url_start}{self.GAME_IDS[game]}%2C{days_since_start}{url_end}', {{
                 headers: {{"csrf-token": "{csrf_token}"}},
             }});
             """
             self.driver.execute_script(fetch_script)
-            time.sleep(3)  # Wait for the request to complete
+            # Wait for the request to complete
+            time.sleep(1.5)
+            
             logger.info("Successfully fetched leaderboard data")
         except Exception as e:
             logger.error(f"Failed to fetch leaderboard data: {str(e)}")
@@ -681,7 +701,7 @@ def main():
 
         leaderboard = {}
         
-        for game_name, game_url in GameSolver.GAME_URLS.items():
+        for game_name in GameSolver.GAME_URLS.keys():
             logger.info(f"Getting leaderboard for {game_name}...")
             solver.get_leaderboard_via_fetch(game_name, csrf_token)
             leaderboard_local = solver.find_leaderboard_data()
