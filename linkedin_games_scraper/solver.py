@@ -632,8 +632,8 @@ class GameSolver:
     def save_results(self, filename=None):
         """Save results to a JSON file."""
         if not filename:
-            filename = f"{self.results_dir}/{datetime.now().strftime('%d-%m-%Y')}.json"
-        with open(filename, "w") as f:
+            filename = f"{self.results_dir}/{datetime.now().strftime('%d-%m-%Y_%H%M%S')}.json"
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2)
         logger.info(f"Results saved to {filename}")
         return filename
