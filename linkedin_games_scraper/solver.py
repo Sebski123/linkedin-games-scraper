@@ -64,8 +64,23 @@ class GameSolver:
         },
     }
 
-    def __init__(self, headless=True, results_dir=None):
+    USER_IDS = {
+        "default" :  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
+        "sem" :  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
+        "mrma" : "ACoAAB7xhCcBG8vvu4WYJ2OC28poKPyLMs4MiiA",
+        "ansp" : "ACoAADbSa88BamvMLUzLxGVzUtB6P3pBEMHKXYg",
+        "cmfr" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+        
+        "mdih" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+        "soss" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+    }
+
+    def __init__(self, headless=True, results_dir=None, user="default"):
         """Initialise the GameSolver."""
+        
+        # Set user ID
+        self.user_id = user
+        
         # Configure Selenium-wire to capture all requests
         self.seleniumwire_options = {
             "disable_encoding": True,
@@ -132,7 +147,7 @@ class GameSolver:
         # Clear existing requests
         del self.driver.requests
 
-        url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0%2C"
+        url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28"
         url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
 
         # Calculated days since game start
@@ -151,7 +166,7 @@ class GameSolver:
         try:
             logger.debug("Fetching leaderboard data via fetch API")
             fetch_script = f"""
-            fetch('{url_start}{self.GAMES[game]["ID"]}%2C{days_since_start}{url_end}', {{
+            fetch('{url_start}{self.USER_IDS[self.user_id]}%2C{self.GAMES[game]["ID"]}%2C{days_since_start}{url_end}', {{
                 headers: {{"csrf-token": "{csrf_token}"}},
             }});
             """
@@ -189,12 +204,18 @@ class GameSolver:
                 logger.debug(f"Found {len(entries)} leaderboard entries in response")
 
                 for entry in entries:
+                    if not entry.get("gameScore"):
+                        continue
                     player_name = entry.get("playerDetails").get(
                         "player").get("profile").get("firstName")
+                    
+                    if not self.user_id == "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("entityUrn", "").lower():
+                        continue
+                    
                     player_score = {
-                        "time": entry.get("gameScore").get("timeElapsed"),
-                        "guessCount": entry.get("gameScore").get("totalGuessCount"),
-                        "flawless": entry.get("isFlawless"),
+                        "time": entry.get("gameScore", {}).get("timeElapsed", None),
+                        "guessCount": entry.get("gameScore", {}).get("totalGuessCount", None),
+                        "flawless": entry.get("isFlawless", None),
                     }
                     leaderboard_data[player_name] = player_score
                 logger.debug( f"Extracted {len(leaderboard_data)} leaderboard entries")
