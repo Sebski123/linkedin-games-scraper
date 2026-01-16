@@ -12,7 +12,7 @@ from seleniumwire import webdriver
 
 # Set up logging
 # First, disable all loggers
-for name, _ in logging.Logger.manager.loggerDict:
+for name in logging.Logger.manager.loggerDict:
     logging.getLogger(name).disabled = True
 
 # Then set up our logger
@@ -230,7 +230,7 @@ def main():
 
         leaderboard = {}
 
-        for game_name, _ in GameSolver.GAMES:
+        for game_name in ["zip"]: #GameSolver.GAMES:
             logger.info(f"Getting leaderboard for {game_name}...")
             solver.get_leaderboard_via_fetch(game_name, csrf_token)
             leaderboard_local = solver.find_leaderboard_data()
