@@ -132,7 +132,7 @@ class GameSolver:
         del self.driver.requests
 
         url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0%2C"
-        url_end = "%29,start:0,count:15)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
+        url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
 
         # Calculated days since game start
         start_date_str = self.GAMES[game]["start_date"]
