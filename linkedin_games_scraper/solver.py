@@ -122,12 +122,13 @@ class GameSolver:
                         f"Page load timed out after {timeout} seconds")
                     return None
                 else:
-                    logger.info(f"Waiting for page load... ({str(e)})")
+                    logger.debug(f"Waiting for page load... ({str(e)})")
                 time.sleep(1)
                 continue
 
     def get_leaderboard_via_fetch(self, game, csrf_token, date=None):
         """Get the leaderboard for a game using fetch API."""
+        
         # Clear existing requests
         del self.driver.requests
 
@@ -148,7 +149,7 @@ class GameSolver:
 
         # Use fetch API to get leaderboard data directly
         try:
-            logger.info("Fetching leaderboard data via fetch API")
+            logger.debug("Fetching leaderboard data via fetch API")
             fetch_script = f"""
             fetch('{url_start}{self.GAMES[game]["ID"]}%2C{days_since_start}{url_end}', {{
                 headers: {{"csrf-token": "{csrf_token}"}},
@@ -158,7 +159,7 @@ class GameSolver:
             # Wait for the request to complete
             time.sleep(1.5)
 
-            logger.info("Successfully fetched leaderboard data")
+            logger.debug("Successfully fetched leaderboard data")
         except (RuntimeError, ValueError, KeyError) as e:
             logger.error(f"Failed to fetch leaderboard data: {str(e)}")
             return None
@@ -185,8 +186,7 @@ class GameSolver:
                 else:
                     entries = entries_temp.get(
                         "identityDashGameConnectionsEntitiesByLeaderboardSnapshotV2", {}).get("elements", [])
-                logger.info(
-                    f"Found {len(entries)} leaderboard entries in response")
+                logger.debug(f"Found {len(entries)} leaderboard entries in response")
 
                 for entry in entries:
                     player_name = entry.get("playerDetails").get(
@@ -197,8 +197,7 @@ class GameSolver:
                         "flawless": entry.get("isFlawless"),
                     }
                     leaderboard_data[player_name] = player_score
-                logger.info(
-                    f"Extracted {len(leaderboard_data)} leaderboard entries")
+                logger.debug( f"Extracted {len(leaderboard_data)} leaderboard entries")
             except (json.JSONDecodeError, KeyError, AttributeError, TypeError) as e:
                 logger.error(f"Error parsing leaderboard response: {str(e)}")
         return leaderboard_data
