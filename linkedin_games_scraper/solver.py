@@ -32,6 +32,21 @@ class GameSolver:
 
     # Game URLs
     GAMES = {
+        "zip": {
+            "url": "https://www.linkedin.com/games/zip", 
+            "ID": 6, 
+            "start_date": "2025-03-17"
+        },
+        "tango": {
+            "url": "https://www.linkedin.com/games/tango", 
+            "ID": 5, 
+            "start_date": "2024-10-07"
+        },
+        "queens": {
+            "url": "https://www.linkedin.com/games/queens", 
+            "ID": 3, 
+            "start_date": "2024-04-30"
+        },
         "pinpoint": {
             "url": "https://www.linkedin.com/games/pinpoint", 
             "ID": 1, 
@@ -41,21 +56,6 @@ class GameSolver:
             "url": "https://www.linkedin.com/games/crossclimb", 
             "ID": 2, 
             "start_date": "2024-04-30"
-        },
-        "zip": {
-            "url": "https://www.linkedin.com/games/zip", 
-            "ID": 6, 
-            "start_date": "2025-03-17"
-        },
-        "queens": {
-            "url": "https://www.linkedin.com/games/queens", 
-            "ID": 3, 
-            "start_date": "2024-04-30"
-        },
-        "tango": {
-            "url": "https://www.linkedin.com/games/tango", 
-            "ID": 5, 
-            "start_date": "2024-10-07"
         },
         "mini_sudoku": {
             "url": "https://www.linkedin.com/games/mini-sudoku", 
