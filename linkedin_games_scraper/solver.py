@@ -129,7 +129,7 @@ class GameSolver:
             try:
                 WebDriverWait(self.driver, 5).until(lambda d: d.execute_script(
                     "return document.readyState") == "complete")
-                logger.info("Page loaded successfully")
+                logger.debug("Page loaded successfully")
                 break
             except (TimeoutError, RuntimeError) as e:
                 if time.time() - start_time >= timeout:
@@ -241,26 +241,35 @@ class GameSolver:
 # Main function
 def main():
     """Run the LinkedIn Games Solver."""
-    solver = GameSolver(headless=True)
+    solver = GameSolver(headless=True, user="default")
 
     try:
         # Solve all games
         solver.driver.get("https://www.linkedin.com/")
         solver.wait_for_page_load(timeout=30)
+        # time.sleep(60)
         csrf_token = solver.extract_csrf_token()
 
         # solver.get_leaderboard(solver.GAME_URLS["zip"], timeout_seconds=30)
         # solver.get_leaderboard(solver.GAME_URLS["tango"], timeout_seconds=30)
 
         leaderboard = {}
+        
+        # list of dates from 2026-01-05 to 2026-01-15
+        dates_to_check = [
+            datetime(2026, 1, day, 9, 0, 0) for day in range(5, 16)
+        ]
 
-        for game_name in ["zip"]: #GameSolver.GAMES:
-            logger.info(f"Getting leaderboard for {game_name}...")
-            solver.get_leaderboard_via_fetch(game_name, csrf_token)
-            leaderboard_local = solver.find_leaderboard_data()
-            leaderboard[game_name] = leaderboard_local
-            print(
-                f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
+        for date in dates_to_check:
+            leaderboard_date = {}
+            logger.info(f"\nGetting leaderboards for date: {date.strftime('%Y-%m-%d')}")
+            for game_name in GameSolver.GAMES:
+                logger.info(f"Getting leaderboard for {game_name}...")
+                solver.get_leaderboard_via_fetch(game_name, csrf_token, date=date)
+                leaderboard_local = solver.find_leaderboard_data()
+                leaderboard_date[game_name] = leaderboard_local
+                # print(f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
+            leaderboard[date.strftime("%Y-%m-%d")] = leaderboard_date
 
         print("\nLeaderboard Results:")
         print(leaderboard)
