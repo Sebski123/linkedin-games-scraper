@@ -162,8 +162,11 @@ class GameSolver:
     def find_leaderboard_data(self):
         """Find leaderboard data in requests."""
         leaderboard_data = {}
-        filtered_requests = [request for request in self.driver.requests if ("voyager/api/graphql" in request.url and "voyagerIdentityDashGameConnectionsEntities" in request.url and (
-            "c37afe5a2cada33789b5a636e62147ae" in request.url or "370a22a07dce5feba0a603ed03e4c908" in request.url))]
+        filtered_requests = [request for request in self.driver.requests if (
+            "voyager/api/graphql" in request.url and 
+            "voyagerIdentityDashGameConnectionsEntities" in request.url and 
+            "370a22a07dce5feba0a603ed03e4c908" in request.url
+        )]
         for request in filtered_requests:
             if not request.response:
                 continue
