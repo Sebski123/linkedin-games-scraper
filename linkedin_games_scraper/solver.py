@@ -126,7 +126,7 @@ class GameSolver:
                 time.sleep(1)
                 continue
 
-    def get_leaderboard_via_fetch(self, game, csrf_token):
+    def get_leaderboard_via_fetch(self, game, csrf_token, date=None):
         """Get the leaderboard for a game using fetch API."""
         # Clear existing requests
         del self.driver.requests
@@ -139,8 +139,12 @@ class GameSolver:
         if not start_date_str:
             logger.error(f"Start date not found for game: {game}")
             return None
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-        days_since_start = (datetime.now() - start_date).days
+        start_date = datetime.strptime(f"{start_date_str} 09:00:00", "%Y-%m-%d %H:%M:%S")
+
+        if date:
+            days_since_start = (date - start_date).days
+        else:
+            days_since_start = (datetime.now() - start_date).days
 
         # Use fetch API to get leaderboard data directly
         try:
