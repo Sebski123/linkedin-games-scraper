@@ -31,56 +31,56 @@ class GameSolver:
     """GameSolver class."""
 
     # Game URLs
-    GAMES = {
+    GAMES: dict[str, dict[str, str | int]] = {
         "zip": {
-            "url": "https://www.linkedin.com/games/zip", 
-            "ID": 6, 
+            "url": "https://www.linkedin.com/games/zip",
+            "ID": 6,
             "start_date": "2025-03-17"
         },
         "tango": {
-            "url": "https://www.linkedin.com/games/tango", 
-            "ID": 5, 
+            "url": "https://www.linkedin.com/games/tango",
+            "ID": 5,
             "start_date": "2024-10-07"
         },
         "queens": {
-            "url": "https://www.linkedin.com/games/queens", 
-            "ID": 3, 
+            "url": "https://www.linkedin.com/games/queens",
+            "ID": 3,
             "start_date": "2024-04-30"
         },
         "pinpoint": {
-            "url": "https://www.linkedin.com/games/pinpoint", 
-            "ID": 1, 
+            "url": "https://www.linkedin.com/games/pinpoint",
+            "ID": 1,
             "start_date": "2024-04-30"
         },
         "crossclimb": {
-            "url": "https://www.linkedin.com/games/crossclimb", 
-            "ID": 2, 
+            "url": "https://www.linkedin.com/games/crossclimb",
+            "ID": 2,
             "start_date": "2024-04-30"
         },
         "mini_sudoku": {
-            "url": "https://www.linkedin.com/games/mini-sudoku", 
-            "ID": 7, 
+            "url": "https://www.linkedin.com/games/mini-sudoku",
+            "ID": 7,
             "start_date": "2025-08-11"
         },
     }
 
     USER_IDS = {
-        "default" :  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
-        "sem" :  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
-        "mrma" : "ACoAAB7xhCcBG8vvu4WYJ2OC28poKPyLMs4MiiA",
-        "ansp" : "ACoAADbSa88BamvMLUzLxGVzUtB6P3pBEMHKXYg",
-        "cmfr" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
-        
-        "mdih" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
-        "soss" : "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+        "default":  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
+        "sem":  "ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0",
+        "mrma": "ACoAAB7xhCcBG8vvu4WYJ2OC28poKPyLMs4MiiA",
+        "ansp": "ACoAADbSa88BamvMLUzLxGVzUtB6P3pBEMHKXYg",
+        "cmfr": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+
+        "mdih": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+        "soss": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
     }
 
     def __init__(self, headless=True, results_dir=None, user="default"):
         """Initialise the GameSolver."""
-        
+
         # Set user ID
         self.user_id = user
-        
+
         # Configure Selenium-wire to capture all requests
         self.seleniumwire_options = {
             "disable_encoding": True,
@@ -93,13 +93,13 @@ class GameSolver:
 
         firefox_options = Options()
         if headless:
-            firefox_options.add_argument("--headless")
+            firefox_options.add_argument("--headless")  # type: ignore
 
-        firefox_options.add_argument("--disable-content-sandbox")
+        firefox_options.add_argument("--disable-content-sandbox")  # type: ignore
 
-        firefox_options.add_argument("-profile")
-        firefox_options.add_argument(
-            "C:/Users/sem/AppData/Roaming/Mozilla/Firefox/Profiles/1k1o0g08.default-release-1/")
+        firefox_options.add_argument("-profile")  # type: ignore
+        firefox_options.add_argument(  # type: ignore
+            "C:/Users/sebth/AppData/Roaming/Mozilla/Firefox/Profiles/5opifmkl.default-release")
 
         # Initialise the driver
         self.driver = webdriver.Firefox(
@@ -143,7 +143,7 @@ class GameSolver:
 
     def get_leaderboard_via_fetch(self, game, csrf_token, date=None):
         """Get the leaderboard for a game using fetch API."""
-        
+
         # Clear existing requests
         del self.driver.requests
 
@@ -183,8 +183,8 @@ class GameSolver:
         """Find leaderboard data in requests."""
         leaderboard_data = {}
         filtered_requests = [request for request in self.driver.requests if (
-            "voyager/api/graphql" in request.url and 
-            "voyagerIdentityDashGameConnectionsEntities" in request.url and 
+            "voyager/api/graphql" in request.url and
+            "voyagerIdentityDashGameConnectionsEntities" in request.url and
             "370a22a07dce5feba0a603ed03e4c908" in request.url
         )]
         for request in filtered_requests:
@@ -208,17 +208,17 @@ class GameSolver:
                         continue
                     player_name = entry.get("playerDetails").get(
                         "player").get("profile").get("firstName")
-                    
+
                     if not self.user_id == "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("entityUrn", "").lower():
                         continue
-                    
+
                     player_score = {
                         "time": entry.get("gameScore", {}).get("timeElapsed", None),
                         "guessCount": entry.get("gameScore", {}).get("totalGuessCount", None),
                         "flawless": entry.get("isFlawless", None),
                     }
                     leaderboard_data[player_name] = player_score
-                logger.debug( f"Extracted {len(leaderboard_data)} leaderboard entries")
+                logger.debug(f"Extracted {len(leaderboard_data)} leaderboard entries")
             except (json.JSONDecodeError, KeyError, AttributeError, TypeError) as e:
                 logger.error(f"Error parsing leaderboard response: {str(e)}")
         return leaderboard_data
@@ -239,9 +239,11 @@ class GameSolver:
         return self.save_results()
 
 # Main function
+
+
 def main():
     """Run the LinkedIn Games Solver."""
-    solver = GameSolver(headless=True, user="default")
+    solver = GameSolver(headless=False, user="default")
 
     try:
         # Solve all games
@@ -254,7 +256,7 @@ def main():
         # solver.get_leaderboard(solver.GAME_URLS["tango"], timeout_seconds=30)
 
         leaderboard = {}
-        
+
         # list of dates from 2026-01-05 to 2026-01-15
         dates_to_check = [
             datetime(2026, 1, day, 9, 0, 0) for day in range(5, 16)

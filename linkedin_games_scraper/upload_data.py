@@ -1,17 +1,24 @@
+import datetime
 import json
-import math
 from pathlib import Path
 
 import gspread
-from google.oauth2.service_account import Credentials
-
 
 # ----------------- CONFIG -----------------
-SERVICE_ACCOUNT_FILE = "service_account_credentials.json"
 SPREADSHEET_NAME = "linkedinTest"
-JSON_FILE = "results\\16-01-2026_084757.json"
-target_date_str = "05-Jan"   # date that this JSON's data belongs to
 # -----------------------------------------
+
+# Map JSON player name to sheet column header if needed
+# Example: "Sebastian" -> "SEM"
+NAME_MAP = {
+    "Sebastian": "SEM",
+    "Mads": "MRMA",
+    "Malaika Din": "MDIH",
+    "Anders": "ANSP",
+    "Søsser": "SOSS",
+    "Leon Philipson": "LPA",
+    # add others...
+}
 
 
 def secs_to_m_ss(seconds: int | float) -> float:
@@ -24,19 +31,14 @@ def secs_to_m_ss(seconds: int | float) -> float:
     return float(f"{m}.{s:02d}")
 
 
-def main():
-    # Authorize
-    # scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    # creds = Credentials.from_service_account_file(
-    #     SERVICE_ACCOUNT_FILE, scopes=scopes
-    # )
-    gc = gspread.service_account(filename=SERVICE_ACCOUNT_FILE)
+def main(file_json: str, credentials_file: str):
+    gc = gspread.service_account(filename=credentials_file)
 
     # Open spreadsheet
     sh = gc.open(SPREADSHEET_NAME)
 
     # Load JSON
-    data = json.loads(Path(JSON_FILE).read_text())
+    data = json.loads(Path(file_json).read_text())
 
     # For each game (sheet)
     for game_name, players in data.items():
@@ -48,6 +50,12 @@ def main():
 
         # Find row for the given date (in column A)
         dates_col = ws.col_values(1)  # list including header (if any)
+        # extract date from filename, assuming format 'DD-MM-YYYY_hhmmss.json'
+        filename = Path(file_json).name
+        date_part = filename.split("_")[0]  # '17-01-2026'
+        dt = datetime.datetime.strptime(date_part, "%d-%m-%Y")
+        target_date_str = dt.strftime("%d-%b")
+
         try:
             row_index = dates_col.index(target_date_str) + 1
         except ValueError:
@@ -60,27 +68,21 @@ def main():
 
         # Insert each player's time
         for player_name, result in players.items():
-            if result["time"] is None:
+            if (game_name == "pinpoint" and result["guessCount"] is None) or (game_name != "pinpoint" and result["time"] is None):
                 continue
 
-            # Map JSON player name to sheet column header if needed
-            # Example: "Sebastian" -> "SEM"
-            name_map = {
-                "Sebastian": "SEM",
-                "Mads": "MRMA",
-                "Malaika Din": "MDIH",
-                "Anders": "ANSP",
-                "Søsser": "SOSS",
-                # add others...
-            }
-            header_name = name_map.get(player_name, player_name)
+            header_name = NAME_MAP.get(player_name, player_name)
 
             col_index = header_to_col.get(header_name)
             if not col_index:
-                print(f"No column for player {player_name} in sheet {game_name}")
+                # print(f"No column for player {player_name} in sheet {game_name}")
                 continue
 
-            value = secs_to_m_ss(result["time"])
+            if game_name == "pinpoint":
+                value = result["guessCount"]
+            else:
+                value = secs_to_m_ss(result["time"])
+
             ws.update_cell(row_index, col_index, value)
 
         print(f"Updated sheet {game_name} for date {target_date_str}")
