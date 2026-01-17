@@ -5,6 +5,7 @@ import logging
 import os
 import time
 from datetime import datetime
+from typing import Optional
 
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -75,7 +76,7 @@ class GameSolver:
         "soss": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
     }
 
-    def __init__(self, headless=True, results_dir=None, user="default"):
+    def __init__(self, headless: bool = True, results_dir: Optional[str] = None, user: str = "default"):
         """Initialise the GameSolver."""
 
         # Set user ID
@@ -106,29 +107,30 @@ class GameSolver:
             seleniumwire_options=self.seleniumwire_options, options=firefox_options)
 
         # Initialise results dictionary
-        self.results = {"data": {}}
+        self.results: dict[str, dict[str, str | int | None]] = {"data": {}}
 
         # Create results directory if it doesn't exist
         self.results_dir = results_dir or "results"
         os.makedirs(self.results_dir, exist_ok=True)
 
-    def extract_csrf_token(self):
+    def extract_csrf_token(self) -> Optional[str]:
         """Extract CSRF token from cookies."""
-        for cookie in self.driver.get_cookies():
+        for cookie in self.driver.get_cookies():  # type: ignore
             if cookie['name'] == 'JSESSIONID':
-                csrf_token = cookie['value'].strip('"')
+                csrf_token: str = cookie['value'].strip('"')  # type: ignore
+                assert isinstance(csrf_token, str)
                 logger.info(f"Extracted CSRF token: {csrf_token}")
                 return csrf_token
         logger.warning("CSRF token not found in cookies.")
         return None
 
-    def wait_for_page_load(self, timeout=30):
+    def wait_for_page_load(self, timeout: int = 30) -> None:
         """Wait for the page to load completely."""
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
                 WebDriverWait(self.driver, 5).until(lambda d: d.execute_script(
-                    "return document.readyState") == "complete")
+                    "return document.readyState") == "complete")  # type: ignore
                 logger.debug("Page loaded successfully")
                 break
             except (TimeoutError, RuntimeError) as e:
@@ -141,7 +143,7 @@ class GameSolver:
                 time.sleep(1)
                 continue
 
-    def get_leaderboard_via_fetch(self, game, csrf_token, date=None):
+    def get_leaderboard_via_fetch(self, game: str, csrf_token: str, date: Optional[datetime] = None) -> None:
         """Get the leaderboard for a game using fetch API."""
 
         # Clear existing requests
@@ -170,7 +172,7 @@ class GameSolver:
                 headers: {{"csrf-token": "{csrf_token}"}},
             }});
             """
-            self.driver.execute_script(fetch_script)
+            self.driver.execute_script(fetch_script)  # type: ignore
             # Wait for the request to complete
             time.sleep(1.5)
 
@@ -179,9 +181,9 @@ class GameSolver:
             logger.error(f"Failed to fetch leaderboard data: {str(e)}")
             return None
 
-    def find_leaderboard_data(self):
+    def find_leaderboard_data(self) -> dict[str, dict[str, str | int | None]]:
         """Find leaderboard data in requests."""
-        leaderboard_data = {}
+        leaderboard_data: dict[str, dict[str, str | int | None]] = {}
         filtered_requests = [request for request in self.driver.requests if (
             "voyager/api/graphql" in request.url and
             "voyagerIdentityDashGameConnectionsEntities" in request.url and
@@ -223,7 +225,7 @@ class GameSolver:
                 logger.error(f"Error parsing leaderboard response: {str(e)}")
         return leaderboard_data
 
-    def save_results(self, filename=None):
+    def save_results(self, filename: Optional[str] = None) -> str:
         """Save results to a JSON file."""
         if not filename:
             filename = f"{self.results_dir}/{datetime.now().strftime('%d-%m-%Y_%H%M%S')}.json"
@@ -251,11 +253,12 @@ def main():
         solver.wait_for_page_load(timeout=30)
         # time.sleep(60)
         csrf_token = solver.extract_csrf_token()
+        assert csrf_token is not None
 
         # solver.get_leaderboard(solver.GAME_URLS["zip"], timeout_seconds=30)
         # solver.get_leaderboard(solver.GAME_URLS["tango"], timeout_seconds=30)
 
-        leaderboard = {}
+        leaderboard: dict[str, dict[str, str | int | None]] = {}
 
         # list of dates from 2026-01-05 to 2026-01-15
         dates_to_check = [
