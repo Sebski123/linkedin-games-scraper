@@ -3,8 +3,8 @@ from pathlib import Path
 from linkedin_games_scraper import GameSolver, logger
 from linkedin_games_scraper.upload_data import main as upload_data_main
 
-# Fetch data from LinkedI
-solver = GameSolver(headless=False, user="default")
+# Fetch data from LinkedIn
+solver = GameSolver(headless=True, user="default")
 
 try:
     solver.driver.get("https://www.linkedin.com/")

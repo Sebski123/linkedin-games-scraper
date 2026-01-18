@@ -9,6 +9,7 @@ from typing import Optional
 
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from seleniumwire import webdriver
 
 # Set up logging
@@ -102,9 +103,10 @@ class GameSolver:
         firefox_options.add_argument(  # type: ignore
             "C:/Users/sebth/AppData/Roaming/Mozilla/Firefox/Profiles/5opifmkl.default-release")
 
+        service = FirefoxService(executable_path="/usr/local/bin/geckodriver")
         # Initialise the driver
         self.driver = webdriver.Firefox(
-            seleniumwire_options=self.seleniumwire_options, options=firefox_options)
+            seleniumwire_options=self.seleniumwire_options, options=firefox_options, service=service)
 
         # Initialise results dictionary
         self.results: dict[str, dict[str, str | int | None]] = {"data": {}}

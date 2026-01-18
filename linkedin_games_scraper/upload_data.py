@@ -17,6 +17,7 @@ NAME_MAP = {
     "Anders": "ANSP",
     "Søsser": "SOSS",
     "Leon Philipson": "LPA",
+    "Camilla": "CMFR"
     # add others...
 }
 
