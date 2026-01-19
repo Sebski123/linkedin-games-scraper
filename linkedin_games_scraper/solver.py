@@ -72,9 +72,8 @@ class GameSolver:
         "mrma": "ACoAAB7xhCcBG8vvu4WYJ2OC28poKPyLMs4MiiA",
         "ansp": "ACoAADbSa88BamvMLUzLxGVzUtB6P3pBEMHKXYg",
         "cmfr": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
-
-        "mdih": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
-        "soss": "ACoAADs_ghABVdJ3UtTWMEgcWZz7tadIZd4gXCU",
+        "mdih": "ACoAAC0lyTAB2qNwg-rV6wa6z0UBsVxScSTJw80",
+        "soss": "ACoAABPHDDQBDq6m4FsvUN1b1eXElc9KenRr_KM",
     }
 
     def __init__(self, headless: bool = True, results_dir: Optional[str] = None, user: str = "default"):
@@ -213,7 +212,7 @@ class GameSolver:
                     player_name = entry.get("playerDetails").get(
                         "player").get("profile").get("firstName")
 
-                    if not self.user_id == "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("entityUrn", "").lower():
+                    if not self.user_id == "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("profile").get("entityUrn", "").lower():
                         continue
 
                     player_score = {
