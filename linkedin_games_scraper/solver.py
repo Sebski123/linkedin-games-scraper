@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from selenium.webdriver.firefox.options import Options
@@ -230,7 +230,11 @@ class GameSolver:
     def save_results(self, filename: Optional[str] = None) -> str:
         """Save results to a JSON file."""
         if not filename:
-            filename = f"{self.results_dir}/{datetime.now().strftime('%d-%m-%Y_%H%M%S')}.json"
+            if datetime.now().hour < 9:
+                date_for_filename = datetime.now() - timedelta(days=1)
+            else:
+                date_for_filename = datetime.now()
+            filename = f"{self.results_dir}/{date_for_filename.strftime('%d-%m-%Y')}.json"
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2)
         logger.info(f"Results saved to {filename}")
