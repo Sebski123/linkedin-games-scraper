@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import json
 from linkedin_games_scraper import GameSolver, logger
 from linkedin_games_scraper.upload_data import main as upload_data_main
 
@@ -15,14 +15,19 @@ try:
     leaderboard = {}
 
     for game_name in GameSolver.GAMES:
-        logger.info(f"Getting leaderboard for {game_name}...")
-        solver.get_leaderboard_via_fetch(game_name, csrf_token)
-        leaderboard_local = solver.find_leaderboard_data()
-        leaderboard[game_name] = leaderboard_local
-        print(f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
+        for i in range(4):
+          logger.info(f"Getting leaderboard for {game_name}...")
+          solver.get_leaderboard_via_fetch(game_name, csrf_token)
+          leaderboard_local = solver.find_leaderboard_data()
+          if len(leaderboard_local) > 0:
+              leaderboard[game_name] = leaderboard_local
+              logger.info(f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
+              break
+          else:
+              logger.info(f"Got 0 entries for {game_name} leaderboard, retrying")
 
-    print("\nLeaderboard Results:")
-    print(leaderboard)
+    logger.info("\nLeaderboard Results:")
+    logger.info(json.dumps(leaderboard, indent=2))
     solver.results = leaderboard
 finally:
     results_file = solver.cleanup()

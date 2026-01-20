@@ -1,6 +1,7 @@
 import datetime
 import json
 from pathlib import Path
+from .solver import logger
 
 import gspread
 
@@ -69,7 +70,7 @@ def main(file_json: str, credentials_file: str):
         try:
             row_index = dates_col.index(target_date_str) + 1
         except ValueError:
-            print(f"Date {target_date_str} not found in sheet {game_name}")
+            logger.info(f"Date {target_date_str} not found in sheet {game_name}")
             continue
 
         # Get header row to map player -> column
@@ -85,7 +86,7 @@ def main(file_json: str, credentials_file: str):
 
             col_index = header_to_col.get(header_name)
             if not col_index:
-                # print(f"No column for player {player_name} in sheet {game_name}")
+                # logger.info(f"No column for player {player_name} in sheet {game_name}")
                 continue
 
             if game_name == "pinpoint":
@@ -95,7 +96,7 @@ def main(file_json: str, credentials_file: str):
 
             ws.update_cell(row_index, col_index, value)
 
-        print(f"Updated sheet {game_name} for date {target_date_str}")
+        logger.info(f"Updated sheet {game_name} for date {target_date_str}")
 
 
 if __name__ == "__main__":

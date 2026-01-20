@@ -281,8 +281,8 @@ def main():
                 # print(f"Got {len(leaderboard_local)} entries for {game_name} leaderboard")
             leaderboard[date.strftime("%Y-%m-%d")] = leaderboard_date
 
-        print("\nLeaderboard Results:")
-        print(leaderboard)
+        logger.info("\nLeaderboard Results:")
+        logger.info(json.dumps(leaderboard, indent=2))
         solver.results = leaderboard
     finally:
         solver.cleanup()
