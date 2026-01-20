@@ -21,6 +21,15 @@ NAME_MAP = {
     # add others...
 }
 
+ID_TO_SHEET_NAME = {
+    "zip": "Zip",
+    "queens": "Queens",
+    "tango": "Tango",
+    "pinpoint": "PinPoint",
+    "crossclimb": "CrossClimb",
+    "mini_sudoku": "Sudoku",
+}
+
 
 def secs_to_m_ss(seconds: int | float) -> float:
     """
@@ -39,12 +48,12 @@ def main(file_json: str, credentials_file: str):
     sh = gc.open(SPREADSHEET_NAME)
 
     # Load JSON
-    data = json.loads(Path(file_json).read_text())
+    data: dict[str, dict[str, dict[str, int | None]]] = json.loads(Path(file_json).read_text())
 
     # For each game (sheet)
     for game_name, players in data.items():
         try:
-            ws = sh.worksheet(game_name.capitalize())  # or exactly game_name
+            ws = sh.worksheet(ID_TO_SHEET_NAME.get(game_name, game_name))
         except gspread.WorksheetNotFound:
             # if sheet names are lowercase, use game_name
             ws = sh.worksheet(game_name)
