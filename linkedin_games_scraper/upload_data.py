@@ -6,7 +6,7 @@ from .solver import logger
 import gspread
 
 # ----------------- CONFIG -----------------
-SPREADSHEET_NAME = "linkedinTest"
+SPREADSHEET_NAME = "LinkedIn_Leaderboard"
 # -----------------------------------------
 
 # Map JSON player name to sheet column header if needed
@@ -63,7 +63,7 @@ def main(file_json: str, credentials_file: str):
         dates_col = ws.col_values(1)  # list including header (if any)
         # extract date from filename, assuming format 'DD-MM-YYYY_hhmmss.json'
         filename = Path(file_json).name
-        date_part = filename.split("_")[0]  # '17-01-2026'
+        date_part = filename.split("_")[0].split(".")[0]  # '17-01-2026'
         dt = datetime.datetime.strptime(date_part, "%d-%m-%Y")
         target_date_str = dt.strftime("%d-%b")
 
