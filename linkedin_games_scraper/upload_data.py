@@ -92,7 +92,10 @@ def main(file_json: str, credentials_file: str):
                 continue
 
             if game_name == "pinpoint":
-                value = result["guessCount"]
+                if header_name == "MRMA" and result["guessCount"] == 1:
+                  value = f"😠{result['guessCount']}😠"
+                else:
+                  value = result["guessCount"]
             else:
                 value = secs_to_m_ss(result["time"])
 
