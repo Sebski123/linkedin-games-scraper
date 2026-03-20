@@ -15,7 +15,7 @@ try:
     leaderboard = {}
 
     for game_name in GameSolver.GAMES:
-        for i in range(4):
+        for i in range(10):
           logger.info(f"Getting leaderboard for {game_name}...")
           solver.get_leaderboard_via_fetch(game_name, csrf_token)
           leaderboard_local = solver.find_leaderboard_data()
