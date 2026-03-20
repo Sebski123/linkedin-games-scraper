@@ -156,7 +156,7 @@ class GameSolver:
         del self.driver.requests
 
         url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28"
-        url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.b65ad0a856f1b27a986afb73389964bc"
+        url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.797e2ef3274eba1ea7f99414a9f5d7f1"
         
         # Calculated days since game start
         start_date_str = self.GAMES[game]["start_date"]
@@ -171,6 +171,8 @@ class GameSolver:
             days_since_start = (datetime.now() - start_date).days
 
         # Use fetch API to get leaderboard data directly
+        #fetch("https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28ACoAAB2OIy0BU3BCAj3aSGwYj-CXoaCWMMVl0s0%2C8%2C1%29,start:0,count:10)&queryId=voyagerIdentityDashGameConnectionsEntities.797e2ef3274eba1ea7f99414a9f5d7f1", {headers: {"csrf-token":"ajax:7154330407573205146"}})
+
         try:
             logger.debug("Fetching leaderboard data via fetch API")
             fetch_script = f"""
@@ -193,7 +195,7 @@ class GameSolver:
         filtered_requests = [request for request in self.driver.requests if (
             "voyager/api/graphql" in request.url and
             "voyagerIdentityDashGameConnectionsEntities" in request.url and
-            "b65ad0a856f1b27a986afb73389964bc" in request.url
+            "797e2ef3274eba1ea7f99414a9f5d7f1" in request.url
         )]
         for request in filtered_requests:
             if not request.response:
