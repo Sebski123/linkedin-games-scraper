@@ -30,6 +30,7 @@ ID_TO_SHEET_NAME = {
     "pinpoint": "PinPoint",
     "crossclimb": "CrossClimb",
     "mini_sudoku": "Sudoku",
+    "patches": "Patches"
 }
 
 

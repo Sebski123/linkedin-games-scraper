@@ -64,6 +64,11 @@ class GameSolver:
             "ID": 7,
             "start_date": "2025-08-11"
         },
+        "patches": {
+            "url": "https://www.linkedin.com/games/patches",
+            "ID": 8,
+            "start_date": "2026-03-18"
+        },
     }
 
     USER_IDS = {
