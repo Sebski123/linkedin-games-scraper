@@ -156,8 +156,8 @@ class GameSolver:
         del self.driver.requests
 
         url_start = "https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(gameUrn:urn%3Ali%3Afsd_game%3A%28"
-        url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.370a22a07dce5feba0a603ed03e4c908"
-
+        url_end = "%29,start:0,count:30)&queryId=voyagerIdentityDashGameConnectionsEntities.b65ad0a856f1b27a986afb73389964bc"
+        
         # Calculated days since game start
         start_date_str = self.GAMES[game]["start_date"]
         if not start_date_str:
@@ -193,7 +193,7 @@ class GameSolver:
         filtered_requests = [request for request in self.driver.requests if (
             "voyager/api/graphql" in request.url and
             "voyagerIdentityDashGameConnectionsEntities" in request.url and
-            "370a22a07dce5feba0a603ed03e4c908" in request.url
+            "b65ad0a856f1b27a986afb73389964bc" in request.url
         )]
         for request in filtered_requests:
             if not request.response:
