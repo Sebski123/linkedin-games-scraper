@@ -238,7 +238,7 @@ class GameSolver:
                 date_for_filename = datetime.now() - timedelta(days=1)
             else:
                 date_for_filename = datetime.now()
-            filename = f"{self.results_dir}/{date_for_filename.strftime('%d-%m-%Y')}.json"
+            filename = f"{self.results_dir}/{date_for_filename.strftime('%Y-%m-%d')}.json"
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2)
         logger.info(f"Results saved to {filename}")

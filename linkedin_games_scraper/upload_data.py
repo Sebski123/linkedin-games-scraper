@@ -66,7 +66,7 @@ def main(file_json: str, credentials_file: str):
         # extract date from filename, assuming format 'DD-MM-YYYY_hhmmss.json'
         filename = Path(file_json).name
         date_part = filename.split("_")[0].split(".")[0]  # '17-01-2026'
-        dt = datetime.datetime.strptime(date_part, "%d-%m-%Y")
+        dt = datetime.datetime.strptime(date_part, "%Y-%m-%d")
         target_date_str = dt.strftime("%d-%b").lstrip("0")
 
         try:
