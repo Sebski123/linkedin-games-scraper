@@ -1,9 +1,10 @@
 import datetime
 import json
 from pathlib import Path
-from .solver import logger
 
 import gspread
+
+from .solver import logger
 
 # ----------------- CONFIG -----------------
 SPREADSHEET_NAME = "LinkedIn_Leaderboard"
@@ -30,7 +31,8 @@ ID_TO_SHEET_NAME = {
     "pinpoint": "PinPoint",
     "crossclimb": "CrossClimb",
     "mini_sudoku": "Sudoku",
-    "patches": "Patches"
+    "patches": "Patches",
+    "wend": "Wend",
 }
 
 

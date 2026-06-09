@@ -53,7 +53,7 @@ def merge_json_files(input_files: list[str], output_dir: str = "results"):
         path = Path(file_path)
 
         # Extract player code from filename (e.g., "sem" from "sem.json")
-        player_code = path.stem.upper()
+        player_code = path.stem.split("_")[0].upper()
 
         # Look up full player name
         player_name = CODE_TO_NAME.get(player_code)

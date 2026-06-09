@@ -69,6 +69,11 @@ class GameSolver:
             "ID": 8,
             "start_date": "2026-03-18"
         },
+        "wend": {
+            "url": "https://www.linkedin.com/games/wend",
+            "ID": 4,
+            "start_date": "2026-06-09"
+        },
     }
 
     USER_IDS = {
@@ -219,7 +224,7 @@ class GameSolver:
                     player_name = entry.get("playerDetails").get(
                         "player").get("profile").get("firstName")
 
-                    if not self.user_id == "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("profile").get("entityUrn", "").lower():
+                    if self.user_id != "default" and self.USER_IDS[self.user_id].lower() not in entry.get("playerDetails").get("player").get("profile").get("entityUrn", "").lower():
                         continue
 
                     player_score = {
